@@ -1,3 +1,8 @@
-Creating a shell clone in JAVA.
+A simple Unix-like shell clone written in JAVA, with support for:
 
-The goal was to get to understand Java and operating systems in more depth.
+Built-in commands: echo, pwd, cd, history, type
+External command execution (in development)
+Pipes (|) and I/O redirection (>, >>, <) (in development)
+Command history with arrow up/down navigation (in development)
+Auto-completion for built-ins and external commands (in development)
+Pipeline execution (in development)
