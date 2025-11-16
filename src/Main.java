@@ -7,12 +7,16 @@ public class Main {
         List<String> elements = new ArrayList<>();
         StringBuilder input = new StringBuilder();
         boolean quotes = false;
+        boolean dblQuotes = false;
 
         for (int i = 0; i < command.length(); i++) {
             char c = command.charAt(i);
-            if (c == '\'') {
+            if (c == '\'' && !dblQuotes) {
                 quotes = !quotes;
-            } else if (c == ' ' && !quotes) {
+            }else if (c == '\"' && !quotes) {
+                dblQuotes = !dblQuotes;
+            }
+            else if (c == ' ' && !quotes && !dblQuotes) {
                 if (input.length() > 0) {
                     elements.add(input.toString());
                     input = new StringBuilder();
