@@ -11,6 +11,24 @@ public class Main {
 
         for (int i = 0; i < command.length(); i++) {
             char c = command.charAt(i);
+
+            if (c == '\\' && i + 1 < command.length() && !quotes) {
+                i++;
+                char next = command.charAt(i);
+                if (dblQuotes) {
+                    if (next == '\\' || next == '"' || next == '$') {
+                        input.append(next);
+                    }
+                    else{
+                        input.append("\\");
+                        input.append(next);
+                    }
+                }
+                else{
+                    input.append(next);
+                }
+                continue;
+            }
             if (c == '\'' && !dblQuotes) {
                 quotes = !quotes;
             }else if (c == '\"' && !quotes) {
