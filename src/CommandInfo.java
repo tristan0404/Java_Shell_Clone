@@ -5,21 +5,41 @@ public class CommandInfo {
     String[] input;
     String output;
     String error;
+    boolean appendOutput;
+    boolean appendError;
 
-    CommandInfo(String[] input, String output, String error) {
+    //region constructor
+    CommandInfo(String[] input, String output, String error, boolean appendOutput, boolean appendError) {
         this.input = input;
         this.output = output;
         this.error = error;
+        this.appendOutput = appendOutput;
+        this.appendError = appendError;
     }
+    //endregion
     public static CommandInfo parseDirection(String[] command){
         String output = null;
         String error = null;
+        boolean appendError = false;
+        boolean appendOutput = false;
         List<String> list = new ArrayList<>();
 
         for(int i = 0; i < command.length; i++){
-            if(command[i].equals(">") || command[i].equals("1>")){
+            if(command[i].equals(">>") || command[i].equals("1>>")){
+                if(command.length > i+1){
+                    output = command[i+1];
+                    appendOutput = true;
+                    i++;
+                }
+            }else if(command[i].equals(">") || command[i].equals("1>")){
                 if(i + 1 < command.length){
                     output=command[i+1];
+                    i++;
+                }
+            }else if(command[i].equals("2>>")){
+                if(command.length > i+1){
+                    error=command[i+1];
+                    appendError=true;
                     i++;
                 }
             }else if(command[i].equals("2>")){
@@ -32,6 +52,6 @@ public class CommandInfo {
                 list.add(command[i]);
             }
         }
-        return new CommandInfo(list.toArray(new String[0]), output, error);
+        return new CommandInfo(list.toArray(new String[0]), output, error, appendOutput, appendError);
     }
 }

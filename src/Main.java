@@ -68,6 +68,7 @@ public class Main {
                 CommandInfo cmdInfo = CommandInfo.parseDirection(command);
                 String[] actual =  cmdInfo.input;
                 String output = cmdInfo.output;
+                boolean appendOutput = cmdInfo.appendOutput;
 
                 for (int i = 1; i < actual.length; i++) {
                     if (i > 1) {
@@ -75,6 +76,7 @@ public class Main {
                     }
                     builder.append(actual[i]);
                 }
+                //region stdout handling
                 if (output != null) {
                     File outputFile = new File(output);
                     if (!outputFile.isAbsolute()) {
@@ -85,14 +87,15 @@ public class Main {
                     if (parentDir != null && !parentDir.exists()) {
                         parentDir.mkdirs();
                     }
-                    try(BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+                    try(BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile, appendOutput))) {
                         writer.write(builder.toString());
                         writer.newLine();
                     }
                     catch (IOException e) {
                         System.out.println("Error" + e.getMessage());
                     }
-                }else {
+                }//endregion
+                else {
                     System.out.println(builder);
                 }
             }
@@ -164,7 +167,10 @@ public class Main {
                 String[] actual =  cmdInfo.input;
                 String output = cmdInfo.output;
                 String error = cmdInfo.error;
+                boolean appendOutput = cmdInfo.appendOutput;
+                boolean appendError = cmdInfo.appendError;
 
+                //region Path search
                 String pathEnv = System.getenv("PATH");
                 String[] paths = pathEnv.split(":");
                 String fullPath = null;
@@ -184,6 +190,7 @@ public class Main {
                     System.out.println(String.join(" ", actual) + ": command not found");
                     continue;
                 }
+                //endregion
 
                 try {
                     List<String> commandList = new ArrayList<>();
@@ -213,7 +220,7 @@ public class Main {
                         if (parent != null && !parent.exists()) {
                             parent.mkdirs();
                         }
-                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile, appendOutput))) {
                             String line;
                             while ((line = reader.readLine()) != null) {
                                 writer.write(line);
@@ -242,7 +249,7 @@ public class Main {
                         if (parent != null && !parent.exists()) {
                             parent.mkdirs();
                         }
-                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(errorFile))) {
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(errorFile, appendError))) {
                             String line;
                             while ((line = errorReader.readLine()) != null) {
                                 writer.write(line);
