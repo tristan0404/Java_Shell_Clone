@@ -163,6 +163,7 @@ public class Main {
                 CommandInfo cmdInfo = CommandInfo.parseDirection(command);
                 String[] actual =  cmdInfo.input;
                 String output = cmdInfo.output;
+                String error = cmdInfo.error;
 
                 String pathEnv = System.getenv("PATH");
                 String[] paths = pathEnv.split(":");
@@ -202,6 +203,7 @@ public class Main {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
                     BufferedReader errorReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 
+                    //region stdout handling
                     if (output != null) {
                         File outputFile = new File(output);
                         if (!outputFile.isAbsolute()) {
@@ -218,20 +220,42 @@ public class Main {
                                 writer.newLine();
                             }
                         }
-                        String error;
-                        while ((error = errorReader.readLine()) != null) {
-                            System.out.println(error);
+                        String line;
+                        while ((line = errorReader.readLine()) != null) {
+                            System.out.println(line);
                         }
                     }else {
                         String line;
                         while ((line = reader.readLine()) != null) {
                             System.out.println(line);
                         }
-                        String error;
-                        while ((error = errorReader.readLine()) != null) {
-                            System.out.println(error);
+
+                    }
+                    //endregion
+                    //region stderr handling
+                    if (error != null) {
+                        File errorFile = new File(error);
+                        if (!errorFile.isAbsolute()) {
+                            errorFile = new File(currDir, error);
+                        }
+                        File parent = errorFile.getParentFile();
+                        if (parent != null && !parent.exists()) {
+                            parent.mkdirs();
+                        }
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(errorFile))) {
+                            String line;
+                            while ((line = errorReader.readLine()) != null) {
+                                writer.write(line);
+                                writer.newLine();
+                            }
+                        }
+                    }else {
+                        String line;
+                        while ((line = errorReader.readLine()) != null) {
+                            System.out.println(line);
                         }
                     }
+                    //endregion
                 } catch (Exception e) {
                     System.out.println(String.join(" ", actual) + ": command not found");
                 }
