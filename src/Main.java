@@ -57,19 +57,47 @@ public class Main {
             Scanner sc = new Scanner(System.in);
             List<String> list = parseCommand(sc.nextLine());
             String[] command = list.toArray(new String[0]);
-
+//region Exit Command
             if (String.join(" ", command).equals("exit 0")) {
                 System.exit(0);
-            } else if (command[0].equals("echo")) {
-                StringBuilder builder = new StringBuilder();
-                for (int i = 1; i < command.length; i++) {
-                    if (i > 1) {
-                        builder.append(' ');
-                    }
-                    builder.append(command[i]);
-                }
-                System.out.println(builder);
             }
+            //endregion
+            //region Echo Command
+            else if (command[0].equals("echo")) {
+                StringBuilder builder = new StringBuilder();
+                CommandInfo cmdInfo = CommandInfo.parseDirection(command);
+                String[] actual =  cmdInfo.input;
+                String output = cmdInfo.output;
+
+                for (int i = 1; i < actual.length; i++) {
+                    if (i > 1) {
+                        builder.append(" ");
+                    }
+                    builder.append(actual[i]);
+                }
+                if (output != null) {
+                    File outputFile = new File(output);
+                    if (!outputFile.isAbsolute()) {
+                        outputFile = new File(currDir, output);
+                    }
+
+                    File parentDir = outputFile.getParentFile();
+                    if (parentDir != null && !parentDir.exists()) {
+                        parentDir.mkdirs();
+                    }
+                    try(BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+                        writer.write(builder.toString());
+                        writer.newLine();
+                    }
+                    catch (IOException e) {
+                        System.out.println("Error" + e.getMessage());
+                    }
+                }else {
+                    System.out.println(builder);
+                }
+            }
+            //endregion
+            //region Type Command
             else if (command[0].equals("type")) {
                 if (command[1].equals("echo") || command[1].equals("type")|| command[1].equals("exit") || command[1].equals("pwd")) {
                     System.out.println(command[1] +" is a shell builtin");
@@ -94,8 +122,15 @@ public class Main {
                     }
                 }
             }
+            //endregion
+            //region CD Command
             else if (command[0].equals("cd")) {
-                if (command[1].equals("~")) {
+                if (command.length < 2) {
+                    currDir = System.getenv("HOME");
+                    if (currDir == null) {
+                        currDir = System.getProperty("user.home");
+                    }
+                } else if (command[1].equals("~")) {
                     currDir = System.getenv("HOME");
                     if (currDir == null) {
                         currDir = System.getProperty("user.home");
@@ -117,10 +152,18 @@ public class Main {
 
                 }
             }
+            //endregion
+            //region PWD Command
             else if (command[0].equals("pwd")) {
                 System.out.println(currDir);
             }
+            //endregion
+            //region Command Handler
             else {
+                CommandInfo cmdInfo = CommandInfo.parseDirection(command);
+                String[] actual =  cmdInfo.input;
+                String output = cmdInfo.output;
+
                 String pathEnv = System.getenv("PATH");
                 String[] paths = pathEnv.split(":");
                 String fullPath = null;
@@ -130,34 +173,70 @@ public class Main {
                 }
 
                 for (String path : paths) {
-                    File file = new File(path, command[0]);
+                    File file = new File(path, actual[0]);
                     if (file.exists() && file.canExecute()) {
                         fullPath = file.getAbsolutePath();
                         break;
                     }
                 }
+                if (fullPath == null) {
+                    System.out.println(String.join(" ", actual) + ": command not found");
+                    continue;
+                }
+
                 try {
                     List<String> commandList = new ArrayList<>();
                     //commandList.add(fullPath);
-                    commandList.add(command[0]);
-                    for (int i = 1; i < command.length; i++) {
-                        commandList.add(command[i]);
+                    commandList.add(actual[0]);
+                    for (int i = 1; i < actual.length; i++) {
+                        commandList.add(actual[i]);
                     }
                     ProcessBuilder pb = new ProcessBuilder(commandList);
                     Map<String, String> env = pb.environment();
                     String dir = new File(fullPath).getParent();
                     env.put("PATH", dir + ":" + env.get("PATH"));
+                    pb.directory(new File(currDir));
                     Process p = pb.start();
                     p.waitFor();
+
                     BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        System.out.println(line);
+                    BufferedReader errorReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+
+                    if (output != null) {
+                        File outputFile = new File(output);
+                        if (!outputFile.isAbsolute()) {
+                            outputFile = new File(currDir, output);
+                        }
+                        File parent = outputFile.getParentFile();
+                        if (parent != null && !parent.exists()) {
+                            parent.mkdirs();
+                        }
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                writer.write(line);
+                                writer.newLine();
+                            }
+                        }
+                        String error;
+                        while ((error = errorReader.readLine()) != null) {
+                            System.out.println(error);
+                        }
+                    }else {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            System.out.println(line);
+                        }
+                        String error;
+                        while ((error = errorReader.readLine()) != null) {
+                            System.out.println(error);
+                        }
                     }
                 } catch (Exception e) {
-                    System.out.println(String.join(" ", command) + ": command not found");
+                    System.out.println(String.join(" ", actual) + ": command not found");
                 }
             }
+            //endregion
         }
 
     }
