@@ -6,6 +6,3 @@
 * External command execution
 * I/O redirection (>, >>, <)
 * Auto-completion for built-ins and external commands
-* Pipes (|)(in development)
-* Command history with arrow up/down navigation (in development)
-* Pipeline execution (in development)
