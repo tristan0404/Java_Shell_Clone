@@ -1,4 +1,5 @@
 # Shell in JAVA
+A Unix-like shell clone built in JAVA
 
 ## A simple Unix-like shell clone written in JAVA, with support for:
 
